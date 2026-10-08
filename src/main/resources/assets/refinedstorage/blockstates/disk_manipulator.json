@@ -1,0 +1,35 @@
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "refinedstorage:disk_manipulator_connected"
+  },
+  "variants": {
+    "inventory": [
+      {
+        "transform": "forge:default-block"
+      }
+    ],
+    "connected": {
+      "true": {
+        "model": "refinedstorage:disk_manipulator_connected"
+      },
+      "false": {
+        "model": "refinedstorage:disk_manipulator_disconnected"
+      }
+    },
+    "direction": {
+      "north": {
+        "y": 0
+      },
+      "east": {
+        "y": 90
+      },
+      "south": {
+        "y": 180
+      },
+      "west": {
+        "y": 270
+      }
+    }
+  }
+}

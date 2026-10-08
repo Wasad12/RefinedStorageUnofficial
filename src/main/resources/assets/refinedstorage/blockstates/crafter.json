@@ -13,6 +13,19 @@
     "uvlock": true
   },
   "variants": {
+    "inventory": [
+      {
+        "transform": "forge:default-block",
+        "textures": {
+          "down": "#crafter_side",
+          "up": "#crafter_side",
+          "north": "#crafter_front",
+          "east": "#crafter_side_90",
+          "south": "refinedstorage:blocks/crafter_bottom",
+          "west": "#crafter_side_270"
+        }
+      }
+    ],
     "connected": {
       "true": {
         "textures": {

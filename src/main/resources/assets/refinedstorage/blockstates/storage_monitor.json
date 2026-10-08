@@ -13,6 +13,11 @@
     }
   },
   "variants": {
+    "inventory": [
+      {
+        "transform": "forge:default-block"
+      }
+    ],
     "connected": {
       "true": {
         "textures": {

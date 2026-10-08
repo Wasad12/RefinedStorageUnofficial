@@ -16,6 +16,20 @@
     "uvlock": false
   },
   "variants": {
+    "inventory": [
+      {
+        "transform": "forge:default-block",
+        "textures": {
+          "texture1": "refinedstorage:blocks/portable_grid_2_disconnected"
+        }
+      }
+    ],
+    "type": {
+      "normal": {
+      },
+      "creative": {
+      }
+    },
     "disk_state": {
       "normal": {
         "textures": {

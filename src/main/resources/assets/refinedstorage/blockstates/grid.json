@@ -13,6 +13,14 @@
     }
   },
   "variants": {
+    "inventory": [
+      {
+        "transform": "forge:default-block",
+        "textures": {
+          "north": "refinedstorage:blocks/grid_front"
+        }
+      }
+    ],
     "connected": {
       "true": {
         "textures": {

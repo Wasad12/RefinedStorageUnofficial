@@ -15,6 +15,12 @@
         "transform": "forge:default-block"
       }
     ],
+    "type": {
+      "normal": {
+      },
+      "creative": {
+      }
+    },
     "energy": {
       "0": {
         "textures": {
