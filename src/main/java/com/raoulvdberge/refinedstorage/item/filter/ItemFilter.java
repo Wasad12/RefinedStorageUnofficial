@@ -1,0 +1,152 @@
+package com.raoulvdberge.refinedstorage.item.filter;
+
+import com.raoulvdberge.refinedstorage.RS;
+import com.raoulvdberge.refinedstorage.RSGui;
+import com.raoulvdberge.refinedstorage.RSItems;
+import com.raoulvdberge.refinedstorage.api.util.IComparer;
+import com.raoulvdberge.refinedstorage.inventory.ItemHandlerFilterItems;
+import com.raoulvdberge.refinedstorage.item.ItemBase;
+import com.raoulvdberge.refinedstorage.item.ItemPattern;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.world.World;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class ItemFilter extends ItemBase {
+    public static final int MODE_WHITELIST = 0;
+    public static final int MODE_BLACKLIST = 1;
+
+    private static final String NBT_COMPARE = "Compare";
+    private static final String NBT_MODE = "Mode";
+    private static final String NBT_MOD_FILTER = "ModFilter";
+    private static final String NBT_NAME = "Name";
+    private static final String NBT_ICON = "Icon";
+
+    private static Map<ItemStack, List<ItemStack>> FILTER_CACHE = new HashMap<>();
+
+    public ItemFilter() {
+        super("filter");
+
+        setMaxStackSize(1);
+    }
+
+    public static List<ItemStack> getFilterItemsFromCache(ItemStack stack) {
+        if (!FILTER_CACHE.containsKey(stack)) {
+            ItemHandlerFilterItems items = new ItemHandlerFilterItems(stack);
+
+            FILTER_CACHE.put(stack, items.getFilteredItems());
+        }
+
+        return FILTER_CACHE.get(stack);
+    }
+
+    @Override
+    public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+        
+        if (!world.isRemote) {
+            if (player.isSneaking()) {
+                return new ItemStack(RSItems.FILTER);
+            }
+
+            // DEVIATION: hand is always main hand on 1.8.9 (x param carries the hand index).
+            player.openGui(RS.INSTANCE, RSGui.FILTER, world, 0, 0, 0);
+
+            return stack;
+        }
+
+        return stack;
+    }
+
+    @Override
+    public String getItemStackDisplayName(ItemStack stack) {
+        String name = getName(stack);
+
+        if (!name.equalsIgnoreCase("")) {
+            return name;
+        }
+
+        return super.getItemStackDisplayName(stack);
+    }
+
+    @Override
+    public void addInformation(ItemStack stack, EntityPlayer player, List<String> tooltip, boolean advanced) {
+        super.addInformation(stack, player, tooltip, advanced);
+
+        tooltip.add(EnumChatFormatting.YELLOW + I18n.format("sidebutton.refinedstorage:mode." + (getMode(stack) == MODE_WHITELIST ? "whitelist" : "blacklist")) + EnumChatFormatting.RESET);
+
+        if (isModFilter(stack)) {
+            tooltip.add(EnumChatFormatting.BLUE + I18n.format("gui.refinedstorage:filter.mod_filter") + EnumChatFormatting.RESET);
+        }
+
+        ItemHandlerFilterItems items = new ItemHandlerFilterItems(stack);
+
+        ItemPattern.combineItems(tooltip, false, items.getFilteredItems());
+    }
+
+    public static int getCompare(ItemStack stack) {
+        return (stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_COMPARE)) ? stack.getTagCompound().getInteger(NBT_COMPARE) : (IComparer.COMPARE_DAMAGE | IComparer.COMPARE_NBT);
+    }
+
+    public static void setCompare(ItemStack stack, int compare) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        stack.getTagCompound().setInteger(NBT_COMPARE, compare);
+    }
+
+    public static int getMode(ItemStack stack) {
+        return (stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_MODE)) ? stack.getTagCompound().getInteger(NBT_MODE) : MODE_WHITELIST;
+    }
+
+    public static void setMode(ItemStack stack, int mode) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        stack.getTagCompound().setInteger(NBT_MODE, mode);
+    }
+
+    public static boolean isModFilter(ItemStack stack) {
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_MOD_FILTER) && stack.getTagCompound().getBoolean(NBT_MOD_FILTER);
+    }
+
+    public static void setModFilter(ItemStack stack, boolean modFilter) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        stack.getTagCompound().setBoolean(NBT_MOD_FILTER, modFilter);
+    }
+
+    public static String getName(ItemStack stack) {
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_NAME) ? stack.getTagCompound().getString(NBT_NAME) : "";
+    }
+
+    public static void setName(ItemStack stack, String name) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        stack.getTagCompound().setString(NBT_NAME, name);
+    }
+
+    public static ItemStack getIcon(ItemStack stack) {
+        // DEVIATION: 1.8.9 ItemStack has no NBT constructor; loadItemStackFromNBT is the equivalent.
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_ICON) ? ItemStack.loadItemStackFromNBT(stack.getTagCompound().getCompoundTag(NBT_ICON)) : null;
+    }
+
+    public static void setIcon(ItemStack stack, ItemStack icon) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        stack.getTagCompound().setTag(NBT_ICON, icon.serializeNBT());
+    }
+}

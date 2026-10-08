@@ -1,0 +1,42 @@
+package com.raoulvdberge.refinedstorage.block;
+
+import com.raoulvdberge.refinedstorage.RSGui;
+import com.raoulvdberge.refinedstorage.tile.TileCrafter;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+
+public class BlockCrafter extends BlockNode {
+    public BlockCrafter() {
+        super("crafter");
+    }
+
+    @Override
+    public TileEntity createTileEntity(World world, IBlockState state) {
+        return new TileCrafter();
+    }
+
+    @Override
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumFacing side, float hitX, float hitY, float hitZ) {
+        if (!world.isRemote) {
+            tryOpenNetworkGui(RSGui.CRAFTER, player, world, pos, side);
+        }
+
+        return true;
+    }
+
+    @Override
+    @Nullable
+    public Direction getDirection() {
+        return Direction.ANY_FACE_PLAYER;
+    }
+
+    public boolean hasConnectivityState() {
+        return true;
+    }
+}

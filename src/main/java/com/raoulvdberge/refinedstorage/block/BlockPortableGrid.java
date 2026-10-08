@@ -1,0 +1,135 @@
+package com.raoulvdberge.refinedstorage.block;
+
+import com.raoulvdberge.refinedstorage.RS;
+import com.raoulvdberge.refinedstorage.RSGui;
+import com.raoulvdberge.refinedstorage.item.ItemBlockPortableGrid;
+import com.raoulvdberge.refinedstorage.tile.grid.portable.TilePortableGrid;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BlockPortableGrid extends BlockBase {
+    private static final AxisAlignedBB PORTABLE_GRID_AABB = new AxisAlignedBB(0, 0, 0, 1, 13.2F / 16F, 1);
+
+    public static final PropertyEnum TYPE = PropertyEnum.create("type", PortableGridType.class);
+    public static final PropertyEnum DISK_STATE = PropertyEnum.create("disk_state", PortableGridDiskState.class);
+    public static final PropertyBool CONNECTED = PropertyBool.create("connected");
+
+    public BlockPortableGrid() {
+        super("portable_grid");
+    }
+
+    @Override
+    public boolean hasTileEntity(IBlockState state) {
+        return true;
+    }
+
+    @Override
+    public TileEntity createTileEntity(World world, IBlockState state) {
+        return new TilePortableGrid();
+    }
+
+    @Override
+    public Item createItem() {
+        return new ItemBlockPortableGrid();
+    }
+
+    @Override
+    @Nullable
+    public Direction getDirection() {
+        return Direction.HORIZONTAL;
+    }
+
+    // DEVIATION: 1.8.9 Block has no getBoundingBox; selection bounds go through setBlockBoundsBasedOnState.
+    @Override
+    @SuppressWarnings("deprecation")
+    public void setBlockBoundsBasedOnState(IBlockAccess world, BlockPos pos) {
+        setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 13.2F / 16F, 1.0F);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isOpaqueCube() {
+        return false;
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isFullCube() {
+        return false;
+    }
+
+    @Override
+    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
+
+        if (!world.isRemote) {
+            ((TilePortableGrid) world.getTileEntity(pos)).onPassItemContext(stack);
+        }
+    }
+
+    @Override
+    public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
+        List<ItemStack> drops = new ArrayList<>();
+
+        drops.add(((TilePortableGrid) world.getTileEntity(pos)).getAsItem());
+
+        return drops;
+    }
+
+    @Override
+    public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos) {
+        TilePortableGrid portableGrid = (TilePortableGrid) world.getTileEntity(pos);
+
+        return super.getActualState(state, world, pos)
+            .withProperty(DISK_STATE, portableGrid.getDiskState())
+            .withProperty(CONNECTED, portableGrid.isConnected());
+    }
+
+    @Override
+    protected List<IProperty> getStateProperties() {
+        List<IProperty> properties = super.getStateProperties();
+
+        properties.add(TYPE);
+        properties.add(DISK_STATE);
+        properties.add(CONNECTED);
+
+        return properties;
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return getDefaultState().withProperty(TYPE, meta == 0 ? PortableGridType.NORMAL : PortableGridType.CREATIVE);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return state.getValue(TYPE) == PortableGridType.NORMAL ? 0 : 1;
+    }
+
+    @Override
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumFacing side, float hitX, float hitY, float hitZ) {
+        if (!world.isRemote) {
+            player.openGui(RS.INSTANCE, RSGui.PORTABLE_GRID, world, pos.getX(), pos.getY(), pos.getZ());
+
+            ((TilePortableGrid) world.getTileEntity(pos)).onOpened(player);
+        }
+
+        return true;
+    }
+}

@@ -1,0 +1,99 @@
+package com.raoulvdberge.refinedstorage.block;
+
+import com.raoulvdberge.refinedstorage.api.network.node.INetworkNode;
+import com.raoulvdberge.refinedstorage.api.network.node.INetworkNodeManager;
+import com.raoulvdberge.refinedstorage.apiimpl.API;
+
+import com.raoulvdberge.refinedstorage.tile.TileNode;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+
+import java.util.List;
+
+public abstract class BlockNode extends BlockBase {
+    public static final String NBT_REFINED_STORAGE_DATA = "RefinedStorageData";
+
+    public static final PropertyBool CONNECTED = PropertyBool.create("connected");
+
+    public BlockNode(String name) {
+        super(name);
+    }
+
+    @Override
+    public boolean hasTileEntity(IBlockState state) {
+        return true;
+    }
+
+    @Override
+    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        super.onBlockPlacedBy(world, pos, state, placer, stack);
+
+        if (!world.isRemote) {
+            if (stack.hasTagCompound() && stack.getTagCompound().hasKey(NBT_REFINED_STORAGE_DATA)) {
+                TileEntity tile = world.getTileEntity(pos);
+
+                if (tile instanceof TileNode) {
+                    ((TileNode) tile).getNode().readConfiguration(stack.getTagCompound().getCompoundTag(NBT_REFINED_STORAGE_DATA));
+                    ((TileNode) tile).getNode().markDirty();
+                }
+            }
+
+            API.instance().discoverNode(world, pos);
+        }
+    }
+
+    @Override
+    public void breakBlock(World world, BlockPos pos, IBlockState state) {
+        INetworkNodeManager manager = API.instance().getNetworkNodeManager(world);
+
+        INetworkNode node = manager.getNode(pos);
+
+        dropContents(world, pos);
+
+        removeTile(world, pos, state);
+
+        manager.removeNode(pos);
+        manager.markForSaving();
+
+        if (node.getNetwork() != null) {
+            node.getNetwork().getNodeGraph().rebuild();
+        }
+    }
+
+    @Override
+    protected List<IProperty> getStateProperties() {
+        List<IProperty> properties = super.getStateProperties();
+
+        if (hasConnectivityState()) {
+            properties.add(CONNECTED);
+        }
+
+        return properties;
+    }
+
+    @Override
+    public IBlockState getActualState(IBlockState state, IBlockAccess world, BlockPos pos) {
+        state = super.getActualState(state, world, pos);
+
+        if (hasConnectivityState()) {
+            TileEntity tile = world.getTileEntity(pos);
+
+            if (tile instanceof TileNode) {
+                return state.withProperty(CONNECTED, ((TileNode) tile).getNode().isActive());
+            }
+        }
+
+        return state;
+    }
+
+    public boolean hasConnectivityState() {
+        return false;
+    }
+}

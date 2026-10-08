@@ -1,0 +1,146 @@
+package com.raoulvdberge.refinedstorage.apiimpl.network.readerwriter;
+
+import com.raoulvdberge.refinedstorage.RSUtils;
+import com.raoulvdberge.refinedstorage.api.network.readerwriter.IReader;
+import com.raoulvdberge.refinedstorage.api.network.readerwriter.IReaderWriterChannel;
+import com.raoulvdberge.refinedstorage.api.network.readerwriter.IReaderWriterHandler;
+import com.raoulvdberge.refinedstorage.api.network.readerwriter.IWriter;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.IChatComponent;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatComponentTranslation;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReaderWriterHandlerItems implements IReaderWriterHandler {
+    public static final String ID = "items";
+
+    private ItemStackHandler items;
+    private ItemHandlerReaderWriter itemsReader, itemsWriter;
+
+    public ReaderWriterHandlerItems(@Nullable NBTTagCompound tag) {
+        this.items = new ItemStackHandler(4);
+        this.itemsWriter = new ItemHandlerReaderWriter(items, false, true);
+        this.itemsReader = new ItemHandlerReaderWriter(items, true, false);
+
+        if (tag != null) {
+            RSUtils.readItems(items, 0, tag);
+        }
+    }
+
+    @Override
+    public void update(IReaderWriterChannel channel) {
+        // NO OP
+    }
+
+    @Override
+    public void onWriterDisabled(IWriter writer) {
+        // NO OP
+    }
+
+    @Override
+    public boolean hasCapabilityReader(IReader reader, Capability<?> capability) {
+        return capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
+    }
+
+    @Override
+    public <T> T getCapabilityReader(IReader reader, Capability<T> capability) {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            return (T) (itemsReader);
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean hasCapabilityWriter(IWriter writer, Capability<?> capability) {
+        return capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
+    }
+
+    @Override
+    public <T> T getCapabilityWriter(IWriter writer, Capability<T> capability) {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            return (T) (itemsWriter);
+        }
+
+        return null;
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound tag) {
+        RSUtils.writeItems(items, 0, tag);
+
+        return tag;
+    }
+
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public List<IChatComponent> getStatusReader(IReader reader, IReaderWriterChannel channel) {
+        return getStatus(itemsReader);
+    }
+
+    @Override
+    public List<IChatComponent> getStatusWriter(IWriter writer, IReaderWriterChannel channel) {
+        return getStatus(itemsWriter);
+    }
+
+    private List<IChatComponent> getStatus(IItemHandler handler) {
+        List<IChatComponent> components = new ArrayList<>();
+
+        for (int i = 0; i < handler.getSlots(); ++i) {
+            ItemStack stack = handler.getStackInSlot(i);
+
+            if (!RSUtils.isEmpty(stack)) {
+                components.add(new ChatComponentText(stack.stackSize + "x ").appendSibling(new ChatComponentTranslation(stack.getUnlocalizedName() + ".name")));
+            }
+        }
+
+        return components;
+    }
+
+    private class ItemHandlerReaderWriter implements IItemHandler {
+        private IItemHandler parent;
+        private boolean canInsert, canExtract;
+
+        public ItemHandlerReaderWriter(IItemHandler parent, boolean canInsert, boolean canExtract) {
+            this.parent = parent;
+            this.canInsert = canInsert;
+            this.canExtract = canExtract;
+        }
+
+        @Override
+        public int getSlots() {
+            return parent.getSlots();
+        }
+
+        @Override
+        @Nonnull
+        public ItemStack getStackInSlot(int slot) {
+            return parent.getStackInSlot(slot);
+        }
+
+        @Override
+        @Nonnull
+        public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
+            return canInsert ? parent.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        @Nonnull
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return canExtract ? parent.extractItem(slot, amount, simulate) : null;
+        }
+    }
+}

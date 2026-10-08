@@ -1,0 +1,81 @@
+﻿project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\item\ItemCore.java:19: error: :: 
+raoulvdberge\refinedstorage\item\ItemFluidStoragePart.java:21: error: cannot find symbol :: symbol:   class List location: class ItemFluidStoragePart 
+raoulvdberge\refinedstorage\inventory\ItemHandlerFilterItems.java:32: error: cannot find symbol :: symbol:   class List location: class ItemHandlerFilterItems 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RS.java:39: error: <anonymous :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RS.java:41: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RS.java:40: error: method does :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:154: error: :: symbol:   method isEmpty() 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:155: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:161: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:163: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:166: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:168: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:200: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockBase.java:213: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockCable.java:180: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockCable.java:184: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockCable.java:188: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockCable.java:196: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockCable.java:202: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\tile\TileBase.java:101: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\tile\TileBase.java:100: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\tile\TileBase.java:102: error: :: 
+raoulvdberge\refinedstorage\block\BlockWirelessTransmitter.java:44: error: method does not override or implement a :: 
+raoulvdberge\refinedstorage\block\BlockWirelessTransmitter.java:54: error: method does not override or implement a :: 
+raoulvdberge\refinedstorage\block\BlockWirelessTransmitter.java:60: error: method does not override or implement a :: 
+raoulvdberge\refinedstorage\block\BlockWirelessTransmitter.java:66: error: method does not override or implement a :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockReader.java:56: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockWriter.java:46: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockWriter.java:62: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockWriter.java:70: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockWriter.java:76: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\block\BlockWriter.java:82: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\item\ItemPattern.java:88: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\item\ItemPattern.java:115: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\item\ItemPattern.java:145: error: :: 
+raoulvdberge\refinedstorage\item\ItemFluidStorageDisk.java:58: error: cannot find symbol :: symbol:   variable FluidContainerRegistry location: class ItemFluidStorageDisk 
+raoulvdberge\refinedstorage\item\ItemFluidStorageDisk.java:64: error: incompatible types: NBTBase cannot be converted :: 
+raoulvdberge\refinedstorage\item\ItemFluidStorageDisk.java:90: error: :: 
+raoulvdberge\refinedstorage\item\ItemFluidStorageDisk.java:124: error: method does not override or implement a method :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\item\ItemWrench.java:142: error: :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RSUtils.java:254: error: cannot :: symbol:   method isEmpty() 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RSUtils.java:278: error: no :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RSUtils.java:288: error: cannot :: symbol:   method isEmpty() 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RSUtils.java:311: error: no :: 
+project\refinedstorage-1.8.9\build\sources\main\java\com\raoulvdberge\refinedstorage\RSUtils.java:510: error: method :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\CraftingManager.java:286: error: no suitable constructor found for :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\CraftingManager.java:298: error: no suitable constructor found for :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\registry\CraftingTaskFactory.java:52: error: no suitable constructor :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\registry\CraftingTaskFactory.java:54: error: cannot find symbol :: symbol:   method isEmpty() location: variable insertStack of type ItemStack 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingStep.java:51: error: no suitable constructor found for :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingStep.java:53: error: cannot find symbol :: symbol:   method isEmpty() location: variable patternStack of type ItemStack 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingStep.java:209: error: cannot find symbol :: symbol:   method isEmpty() location: variable actualStack of type ItemStack 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingStepCraft.java:124: error: no suitable constructor found :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingTask.java:247: error: incompatible types: :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingTask.java:253: error: incompatible types: :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingTask.java:264: error: incompatible types: :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingTask.java:353: error: incompatible types: :: 
+raoulvdberge\refinedstorage\apiimpl\autocrafting\task\CraftingTask.java:508: error: incompatible types: :: 
+raoulvdberge\refinedstorage\apiimpl\network\NetworkNodeGraph.java:99: error: :: 
+raoulvdberge\refinedstorage\apiimpl\network\NetworkNodeListener.java:36: error: cannot find symbol :: symbol:   method getPos() location: variable blockSnapshot of type BlockSnapshot 
+raoulvdberge\refinedstorage\apiimpl\network\NetworkNodeManager.java:19: error: NetworkNodeManager is not abstract and :: 
+raoulvdberge\refinedstorage\apiimpl\network\NetworkNodeManager.java:81: error: writeToNBT(NBTTagCompound) in :: 
+raoulvdberge\refinedstorage\apiimpl\network\NetworkNodeManager.java:80: error: method does not override or implement a :: 
+raoulvdberge\refinedstorage\apiimpl\network\grid\FluidGridHandler.java:65: error: :: 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandler.java:52: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandler.java:78: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandler.java:122: error: cannot find symbol :: symbol:   method isEmpty() 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandler.java:136: error: cannot find symbol :: symbol:   variable EMPTY location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandlerPortable.java:52: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandlerPortable.java:78: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandlerPortable.java:115: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\grid\ItemGridHandlerPortable.java:129: error: cannot find symbol :: symbol:   variable EMPTY location: class ItemStack 
+raoulvdberge\refinedstorage\inventory\ItemHandlerBase.java:33: error: cannot find symbol :: symbol:   method set(int,ItemStack) location: variable stacks of type ItemStack[] 
+raoulvdberge\refinedstorage\apiimpl\network\node\NetworkNodeConstructor.java:58: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\apiimpl\network\node\NetworkNodeConstructor.java:100: error: cannot find symbol :: symbol:   method spawnEntity(EntityFireworkRocket) 
+raoulvdberge\refinedstorage\apiimpl\network\node\NetworkNodeConstructor.java:117: error: cannot find symbol :: symbol:   variable FluidContainerRegistry location: class NetworkNodeConstructor 
+raoulvdberge\refinedstorage\apiimpl\network\node\NetworkNodeConstructor.java:118: error: cannot find symbol :: symbol:   variable FluidContainerRegistry 
+raoulvdberge\refinedstorage\apiimpl\network\node\NetworkNodeConstructor.java:186: error: cannot find symbol :: 
+raoulvdberge\refinedstorage\inventory\ItemHandlerUpgrade.java:24: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\inventory\ItemHandlerUpgrade.java:40: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 
+raoulvdberge\refinedstorage\inventory\ItemHandlerUpgrade.java:52: error: cannot find symbol :: symbol:   method isEmpty() location: class ItemStack 

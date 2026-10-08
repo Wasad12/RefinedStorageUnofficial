@@ -1,0 +1,104 @@
+package com.raoulvdberge.refinedstorage.block;
+
+import com.raoulvdberge.refinedstorage.RSGui;
+import com.raoulvdberge.refinedstorage.RSUtils;
+import com.raoulvdberge.refinedstorage.apiimpl.network.node.externalstorage.NetworkNodeExternalStorage;
+import com.raoulvdberge.refinedstorage.tile.TileExternalStorage;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BlockExternalStorage extends BlockCable {
+    private static final AxisAlignedBB HEAD_NORTH_AABB = RSUtils.getAABB(3, 3, 0, 13, 13, 2);
+    private static final AxisAlignedBB HEAD_EAST_AABB = RSUtils.getAABB(14, 3, 3, 16, 13, 13);
+    private static final AxisAlignedBB HEAD_SOUTH_AABB = RSUtils.getAABB(3, 3, 14, 13, 13, 16);
+    private static final AxisAlignedBB HEAD_WEST_AABB = RSUtils.getAABB(0, 3, 3, 2, 13, 13);
+    private static final AxisAlignedBB HEAD_UP_AABB = RSUtils.getAABB(3, 14, 3, 13, 16, 13);
+    private static final AxisAlignedBB HEAD_DOWN_AABB = RSUtils.getAABB(3, 0, 3, 13, 2, 13);
+
+    public BlockExternalStorage() {
+        super("external_storage");
+    }
+
+    @Override
+    public List<AxisAlignedBB> getNonUnionizedCollisionBoxes(IBlockState state) {
+        List<AxisAlignedBB> boxes = new ArrayList<>();
+
+        switch (state.getValue(getDirection().getProperty())) {
+            case NORTH:
+                boxes.add(BlockConstructor.HOLDER_NORTH_AABB);
+                boxes.add(HEAD_NORTH_AABB);
+                break;
+            case EAST:
+                boxes.add(BlockConstructor.HOLDER_EAST_AABB);
+                boxes.add(HEAD_EAST_AABB);
+                break;
+            case SOUTH:
+                boxes.add(BlockConstructor.HOLDER_SOUTH_AABB);
+                boxes.add(HEAD_SOUTH_AABB);
+                break;
+            case WEST:
+                boxes.add(BlockConstructor.HOLDER_WEST_AABB);
+                boxes.add(HEAD_WEST_AABB);
+                break;
+            case UP:
+                boxes.add(BlockConstructor.HOLDER_UP_AABB);
+                boxes.add(HEAD_UP_AABB);
+                break;
+            case DOWN:
+                boxes.add(BlockConstructor.HOLDER_DOWN_AABB);
+                boxes.add(HEAD_DOWN_AABB);
+                break;
+        }
+
+        return boxes;
+    }
+
+    @Override
+    public TileEntity createTileEntity(World world, IBlockState state) {
+        return new TileExternalStorage();
+    }
+
+    @Override
+    public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumFacing side, float hitX, float hitY, float hitZ) {
+        if (hitCablePart(state, world, pos, hitX, hitY, hitZ)) {
+            return false;
+        }
+
+        if (!world.isRemote) {
+            tryOpenNetworkGui(RSGui.EXTERNAL_STORAGE, player, world, pos, side);
+        }
+
+        return true;
+    }
+
+    // DEVIATION: 1.8.9 Block has no neighborChanged; onNeighborBlockChange is the equivalent hook.
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onNeighborBlockChange(World world, BlockPos pos, IBlockState state, Block block) {
+        super.onNeighborBlockChange(world, pos, state, block);
+
+        if (!world.isRemote) {
+            NetworkNodeExternalStorage externalStorage = ((TileExternalStorage) world.getTileEntity(pos)).getNode();
+
+            if (externalStorage.getNetwork() != null) {
+                externalStorage.updateStorage(externalStorage.getNetwork());
+            }
+        }
+    }
+
+    @Override
+    @Nullable
+    public Direction getDirection() {
+        return Direction.ANY;
+    }
+}

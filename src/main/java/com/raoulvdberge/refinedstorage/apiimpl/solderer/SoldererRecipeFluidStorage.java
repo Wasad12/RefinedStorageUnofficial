@@ -1,0 +1,44 @@
+package com.raoulvdberge.refinedstorage.apiimpl.solderer;
+
+import com.raoulvdberge.refinedstorage.RSBlocks;
+import com.raoulvdberge.refinedstorage.RSItems;
+import com.raoulvdberge.refinedstorage.api.solderer.ISoldererRecipe;
+import com.raoulvdberge.refinedstorage.block.FluidStorageType;
+import com.raoulvdberge.refinedstorage.item.ItemBlockFluidStorage;
+import com.raoulvdberge.refinedstorage.item.ItemProcessor;
+import net.minecraft.item.ItemStack;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import javax.annotation.Nonnull;
+
+public class SoldererRecipeFluidStorage implements ISoldererRecipe {
+    private FluidStorageType type;
+    private List<ItemStack> rows = new ArrayList<>();
+
+    public SoldererRecipeFluidStorage(FluidStorageType type, int storagePart) {
+        this.type = type;
+
+        this.rows.add(new ItemStack(RSItems.PROCESSOR, 1, ItemProcessor.TYPE_BASIC));
+        this.rows.add(new ItemStack(RSItems.FLUID_STORAGE_PART, 1, storagePart));
+        this.rows.add(new ItemStack(RSBlocks.MACHINE_CASING));
+    }
+
+    @Override
+    @Nonnull
+    public List<ItemStack> getRow(int row) {
+        return new ArrayList<>(Collections.singletonList(rows.get(row)));
+    }
+
+    @Override
+    @Nonnull
+    public ItemStack getResult() {
+        return ItemBlockFluidStorage.initNBT(new ItemStack(RSBlocks.FLUID_STORAGE, 1, type.getId()));
+    }
+
+    @Override
+    public int getDuration() {
+        return 200;
+    }
+}

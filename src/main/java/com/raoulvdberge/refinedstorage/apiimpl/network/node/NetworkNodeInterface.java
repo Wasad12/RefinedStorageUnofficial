@@ -1,0 +1,210 @@
+package com.raoulvdberge.refinedstorage.apiimpl.network.node;
+
+import com.raoulvdberge.refinedstorage.RS;
+import com.raoulvdberge.refinedstorage.RSUtils;
+import com.raoulvdberge.refinedstorage.api.util.IComparer;
+import com.raoulvdberge.refinedstorage.apiimpl.API;
+import com.raoulvdberge.refinedstorage.apiimpl.network.node.externalstorage.StorageItemItemHandler;
+import com.raoulvdberge.refinedstorage.inventory.ItemHandlerBase;
+import com.raoulvdberge.refinedstorage.inventory.ItemHandlerListenerNetworkNode;
+import com.raoulvdberge.refinedstorage.inventory.ItemHandlerProxy;
+import com.raoulvdberge.refinedstorage.inventory.ItemHandlerUpgrade;
+import com.raoulvdberge.refinedstorage.item.ItemUpgrade;
+import com.raoulvdberge.refinedstorage.tile.config.IComparable;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.CombinedInvWrapper;
+
+public class NetworkNodeInterface extends NetworkNode implements IComparable {
+    public static final String ID = "interface";
+
+    private static final String NBT_COMPARE = "Compare";
+
+    private ItemHandlerBase importItems = new ItemHandlerBase(9, new ItemHandlerListenerNetworkNode(this));
+
+    private ItemHandlerBase exportSpecimenItems = new ItemHandlerBase(9, new ItemHandlerListenerNetworkNode(this));
+    private ItemHandlerBase exportItems = new ItemHandlerBase(9, new ItemHandlerListenerNetworkNode(this));
+
+    private ItemHandlerProxy items = new ItemHandlerProxy(importItems, exportItems);
+
+    private ItemHandlerUpgrade upgrades = new ItemHandlerUpgrade(4, new ItemHandlerListenerNetworkNode(this), ItemUpgrade.TYPE_SPEED, ItemUpgrade.TYPE_STACK, ItemUpgrade.TYPE_CRAFTING);
+
+    private int compare = IComparer.COMPARE_NBT | IComparer.COMPARE_DAMAGE;
+
+    private int currentSlot = 0;
+
+    public NetworkNodeInterface(World world, BlockPos pos) {
+        super(world, pos);
+    }
+
+    @Override
+    public int getEnergyUsage() {
+        return RS.INSTANCE.config.interfaceUsage + upgrades.getEnergyUsage();
+    }
+
+    @Override
+    public void update() {
+        super.update();
+
+        if (network == null || !canUpdate()) {
+            return;
+        }
+
+        if (currentSlot >= importItems.getSlots()) {
+            currentSlot = 0;
+        }
+
+        ItemStack slot = importItems.getStackInSlot(currentSlot);
+
+        if (RSUtils.isEmpty(slot)) {
+            currentSlot++;
+        } else if (ticks % upgrades.getSpeed() == 0) {
+            int size = Math.min(slot.stackSize, upgrades.getItemInteractCount());
+
+            ItemStack remainder = network.insertItemTracked(slot, size);
+
+            if (remainder == null) {
+                importItems.extractItemInternal(currentSlot, size, false);
+            } else if (size - remainder.stackSize > 0) {
+                importItems.extractItemInternal(currentSlot, size - remainder.stackSize, false);
+
+                currentSlot++;
+            }
+        }
+
+        for (int i = 0; i < 9; ++i) {
+            ItemStack wanted = exportSpecimenItems.getStackInSlot(i);
+            ItemStack got = exportItems.getStackInSlot(i);
+
+            if (RSUtils.isEmpty(wanted)) {
+                if (!RSUtils.isEmpty(got)) {
+                    exportItems.setStackInSlot(i, RSUtils.transformNullToEmpty(network.insertItemTracked(got, got.stackSize)));
+                }
+            } else if (!RSUtils.isEmpty(got) && !API.instance().getComparer().isEqualNoQuantity(wanted, got)) {
+                exportItems.setStackInSlot(i, RSUtils.transformNullToEmpty(network.insertItemTracked(got, got.stackSize)));
+            } else {
+                int delta = RSUtils.isEmpty(got) ? wanted.stackSize : (wanted.stackSize - got.stackSize);
+
+                if (delta > 0) {
+                    ItemStack result = network.extractItem(wanted, delta, compare, false, s -> !(s instanceof StorageItemItemHandler) || !((StorageItemItemHandler) s).isConnectedToInterface());
+
+                    if (result != null) {
+                        if (RSUtils.isEmpty(exportItems.getStackInSlot(i))) {
+                            exportItems.setStackInSlot(i, result);
+                        } else {
+                            exportItems.getStackInSlot(i).stackSize += result.stackSize;
+                        }
+                    }
+
+                    // Example: our delta is 5, we extracted 3 items.
+                    // That means we still have to autocraft 2 items.
+                    delta -= result == null ? 0 : result.stackSize;
+
+                    if (delta > 0 && upgrades.hasUpgrade(ItemUpgrade.TYPE_CRAFTING)) {
+                        network.getCraftingManager().schedule(wanted, delta, compare);
+                    }
+                } else if (delta < 0) {
+                    ItemStack remainder = network.insertItemTracked(got, Math.abs(delta));
+
+                    if (remainder == null) {
+                        exportItems.extractItem(i, Math.abs(delta), false);
+                    } else {
+                        exportItems.extractItem(i, Math.abs(delta) - remainder.stackSize, false);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public int getCompare() {
+        return compare;
+    }
+
+    @Override
+    public void setCompare(int compare) {
+        this.compare = compare;
+
+        markDirty();
+    }
+
+    @Override
+    public void read(NBTTagCompound tag) {
+        super.read(tag);
+
+        RSUtils.readItems(importItems, 0, tag);
+        RSUtils.readItems(exportItems, 2, tag);
+        RSUtils.readItems(upgrades, 3, tag);
+    }
+
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public NBTTagCompound write(NBTTagCompound tag) {
+        super.write(tag);
+
+        RSUtils.writeItems(importItems, 0, tag);
+        RSUtils.writeItems(exportItems, 2, tag);
+        RSUtils.writeItems(upgrades, 3, tag);
+
+        return tag;
+    }
+
+    @Override
+    public NBTTagCompound writeConfiguration(NBTTagCompound tag) {
+        super.writeConfiguration(tag);
+
+        RSUtils.writeItems(exportSpecimenItems, 1, tag);
+
+        tag.setInteger(NBT_COMPARE, compare);
+
+        return tag;
+    }
+
+    @Override
+    public void readConfiguration(NBTTagCompound tag) {
+        super.readConfiguration(tag);
+
+        RSUtils.readItems(exportSpecimenItems, 1, tag);
+
+        if (tag.hasKey(NBT_COMPARE)) {
+            compare = tag.getInteger(NBT_COMPARE);
+        }
+    }
+
+    public IItemHandler getImportItems() {
+        return importItems;
+    }
+
+    public IItemHandler getExportSpecimenItems() {
+        return exportSpecimenItems;
+    }
+
+    public IItemHandler getExportItems() {
+        return exportItems;
+    }
+
+    public ItemHandlerProxy getItems() {
+        return items;
+    }
+
+    public IItemHandler getUpgrades() {
+        return upgrades;
+    }
+
+    @Override
+    public IItemHandler getDrops() {
+        return new CombinedInvWrapper(importItems, exportItems, upgrades);
+    }
+
+    @Override
+    public boolean hasConnectivityState() {
+        return true;
+    }
+}
