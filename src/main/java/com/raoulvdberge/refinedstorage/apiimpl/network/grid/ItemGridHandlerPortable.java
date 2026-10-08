@@ -9,10 +9,9 @@ import com.raoulvdberge.refinedstorage.tile.grid.IGrid;
 import com.raoulvdberge.refinedstorage.tile.grid.portable.IPortableGrid;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
 
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -73,7 +72,11 @@ public class ItemGridHandlerPortable implements IItemGridHandler {
 
         if (took != null) {
             if ((flags & EXTRACT_SHIFT) == EXTRACT_SHIFT) {
-                IItemHandler playerInventory = player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.UP);
+                // DEVIATION: 1.8.9 Forge only REGISTERS the item-handler capability, it never
+                // attaches it to players, so the 1.11 player.getCapability lookup always returns
+                // null here (and ItemHandlerHelper.insertItem null-guards into a silent no-op).
+                // Wrap the player inventory explicitly instead.
+                IItemHandler playerInventory = new PlayerMainInvWrapper(player.inventory);
 
                 if (RSUtils.isEmpty(ItemHandlerHelper.insertItem(playerInventory, took, true))) {
                     took = portableGrid.getStorage().extract(item, size, IComparer.COMPARE_DAMAGE | IComparer.COMPARE_NBT, false);

@@ -49,7 +49,14 @@ public class StorageItemItemHandler extends StorageItemExternal {
         List<ItemStack> stacks = new ArrayList<>();
 
         for (int i = 0; i < handler.getSlots(); ++i) {
-            stacks.add(handler.getStackInSlot(i).copy());
+            // DEVIATION: 1.8.9 getStackInSlot returns null for empty slots (1.11 EMPTY
+            // never null). The caller (StorageCacheItem.invalidate) filters empties
+            // anyway, so skip nulls here with identical behavior.
+            ItemStack stack = handler.getStackInSlot(i);
+
+            if (!RSUtils.isEmpty(stack)) {
+                stacks.add(stack.copy());
+            }
         }
 
         return stacks;

@@ -18,10 +18,9 @@ import com.raoulvdberge.refinedstorage.network.MessageGridCraftingPreviewRespons
 import com.raoulvdberge.refinedstorage.network.MessageGridCraftingStartResponse;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
 
 public class ItemGridHandler implements IItemGridHandler {
     private INetwork network;
@@ -73,7 +72,11 @@ public class ItemGridHandler implements IItemGridHandler {
 
         if (took != null) {
             if ((flags & EXTRACT_SHIFT) == EXTRACT_SHIFT) {
-                IItemHandler playerInventory = player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, EnumFacing.UP);
+                // DEVIATION: 1.8.9 Forge only REGISTERS the item-handler capability, it never
+                // attaches it to players, so the 1.11 player.getCapability lookup always returns
+                // null here (and ItemHandlerHelper.insertItem null-guards into a silent no-op).
+                // Wrap the player inventory explicitly instead.
+                IItemHandler playerInventory = new PlayerMainInvWrapper(player.inventory);
 
                 if (RSUtils.isEmpty(ItemHandlerHelper.insertItem(playerInventory, took, true))) {
                     took = network.extractItem(item, size, false);

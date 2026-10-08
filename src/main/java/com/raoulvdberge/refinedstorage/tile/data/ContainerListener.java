@@ -26,9 +26,20 @@ public class ContainerListener {
                     Thread listenerThread = new Thread(() -> {
                         while (manager.getWatchers().size() > 0) {
                             manager.detectAndSendChanges();
+
+                            // DEVIATION: the 1.11 source spins this loop with no sleep (100%
+                            // core burn while any RS GUI is open). Yield briefly; worst-case
+                            // side-button/config sync latency rises by ~50ms (imperceptible).
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                return;
+                            }
                         }
                     }, "RS tile listener " + tile.getPos().getX() + ", " + tile.getPos().getY() + ", " + tile.getPos().getZ());
 
+                    // DEVIATION: daemon so a stuck listener can never prevent JVM shutdown.
+                    listenerThread.setDaemon(true);
                     listenerThread.start();
                 }
             }

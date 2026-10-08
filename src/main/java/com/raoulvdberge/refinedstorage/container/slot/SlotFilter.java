@@ -36,9 +36,12 @@ public class SlotFilter extends SlotItemHandler {
         this(handler, id, x, y, 0);
     }
 
+    // DEVIATION: null guard (1.11 ItemStack.EMPTY.getItem() is null-safe; 1.8.9 null is not).
     @Override
     public boolean canTakeStack(EntityPlayer player) {
-        return getStack().getItem() == RSItems.FILTER;
+        ItemStack stack = getStack();
+
+        return stack != null && stack.getItem() == RSItems.FILTER;
     }
 
     @Override
