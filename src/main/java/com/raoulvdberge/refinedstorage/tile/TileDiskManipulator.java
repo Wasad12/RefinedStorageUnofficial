@@ -56,6 +56,26 @@ public class TileDiskManipulator extends TileNode<NetworkNodeDiskManipulator> {
         return tag;
     }
 
+    // DEVIATION: same chunk-load sync gap as TileDiskDrive (no getUpdateTag on 1.8.9) —
+    // persist display state in save-NBT (see TileDiskDrive.write).
+    @Override
+    public NBTTagCompound write(NBTTagCompound tag) {
+        super.write(tag);
+
+        TileDiskDrive.writeDiskState(tag, 6, getNode().getNetwork() != null, getNode().getItemStorages(), getNode().getFluidStorages());
+
+        return tag;
+    }
+
+    @Override
+    public void read(NBTTagCompound tag) {
+        super.read(tag);
+
+        if (tag.hasKey(String.format(TileDiskDrive.NBT_DISK_STATE, 0))) {
+            TileDiskDrive.readDiskState(tag, diskState);
+        }
+    }
+
     @Override
     public void readUpdate(NBTTagCompound tag) {
         super.readUpdate(tag);

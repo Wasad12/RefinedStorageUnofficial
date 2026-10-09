@@ -5,6 +5,7 @@ import com.raoulvdberge.refinedstorage.tile.TileStorageMonitor;
 import com.raoulvdberge.refinedstorage.tile.config.IType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.TextureMap;
@@ -14,11 +15,14 @@ import net.minecraftforge.client.ForgeHooksClient;
 import org.lwjgl.opengl.GL11;
 
 public class TileEntitySpecialRendererStorageMonitor extends TileEntitySpecialRenderer<TileStorageMonitor> {
-    // DEVIATION: 1.8.9 has no setLightmapDisabled, getItemModelWithOverrides or Minecraft.player;
-    // item model resolves via the ItemModelMesher (mesh definitions wired in slice 2).
+    // DEVIATION: 1.8.9 has no setLightmapDisabled (used by the 1.11 original for
+    // fullbright monitor content). Understood equivalent: force max lightmap coords
+    // while drawing, then restore the world's combined light for this position.
     @Override
     public void renderTileEntityAt(TileStorageMonitor tile, double x, double y, double z, float partialTicks, int destroyStage) {
+        int combinedLight = tile.getWorld().getCombinedLight(tile.getPos(), 0);
 
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240F, 240F);
         float disX = 0, disXText = 0;
         float disY = 0.5F, disYText = 0.23F;
         float disZ = 0, disZText = 0;
@@ -126,5 +130,7 @@ public class TileEntitySpecialRendererStorageMonitor extends TileEntitySpecialRe
         }
 
         GlStateManager.popMatrix();
+
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, combinedLight % 65536, combinedLight / 65536);
     }
 }

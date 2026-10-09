@@ -11,10 +11,10 @@
     ],
     "connected": {
       "true": {
-        "model": "refinedstorage:disk_manipulator_connected"
+        "model": "refinedstorage:disk_manipulator_smart"
       },
       "false": {
-        "model": "refinedstorage:disk_manipulator_disconnected"
+        "model": "refinedstorage:disk_manipulator_smart"
       }
     },
     "direction": {

@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TilePortableGrid extends TileBase implements IGrid, IPortableGrid, IRedstoneConfigurable, cofh.api.energy.IEnergyHandler {
+public class TilePortableGrid extends TileBase implements IGrid, IPortableGrid, IRedstoneConfigurable, cofh.api.energy.IEnergyHandler, cofh.api.energy.IEnergyReceiver, cofh.api.energy.IEnergyProvider {
     public static final TileDataParameter<Integer> ENERGY_STORED = new TileDataParameter<>(DataSerializers.VARINT, 0, new ITileDataProducer<Integer, TilePortableGrid>() {
         @Override
         public Integer getValue(TilePortableGrid tile) {

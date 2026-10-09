@@ -73,7 +73,7 @@ public class TileDiskDrive extends TileNode<NetworkNodeDiskDrive> {
         }
     });
 
-    private static final String NBT_DISK_STATE = "DiskState_%d";
+    static final String NBT_DISK_STATE = "DiskState_%d";
 
     public static final int DISK_STATE_NORMAL = 0;
     public static final int DISK_STATE_NEAR_CAPACITY = 1;
@@ -103,6 +103,29 @@ public class TileDiskDrive extends TileNode<NetworkNodeDiskDrive> {
         writeDiskState(tag, 8, getNode().getNetwork() != null, getNode().getItemStorages(), getNode().getFluidStorages());
 
         return tag;
+    }
+
+    // DEVIATION: 1.11 syncs display state on chunk load via getUpdateTag (which embeds
+    // writeUpdate data). 1.8.9 chunk packets carry only writeToNBT, so the disk state
+    // would stay stale-NONE client-side until a block update (drives looked empty).
+    // Persist it in save-NBT too (freshly computed from storages; hasKey-guarded on read
+    // so pre-fix saves keep NONE instead of misreading absent keys as NORMAL).
+    @Override
+    public NBTTagCompound write(NBTTagCompound tag) {
+        super.write(tag);
+
+        writeDiskState(tag, 8, getNode().getNetwork() != null, getNode().getItemStorages(), getNode().getFluidStorages());
+
+        return tag;
+    }
+
+    @Override
+    public void read(NBTTagCompound tag) {
+        super.read(tag);
+
+        if (tag.hasKey(String.format(NBT_DISK_STATE, 0))) {
+            readDiskState(tag, diskState);
+        }
     }
 
     @Override

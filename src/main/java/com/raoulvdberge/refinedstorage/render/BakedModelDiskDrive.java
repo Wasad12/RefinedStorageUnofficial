@@ -10,9 +10,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.model.IFlexibleBakedModel;
+import net.minecraftforge.client.model.ISmartBlockModel;
 import net.minecraftforge.client.model.TRSRTransformation;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
@@ -20,16 +22,16 @@ import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 import java.util.*;
 
-public class BakedModelDiskDrive implements IBakedModel {
+public class BakedModelDiskDrive implements ISmartBlockModel, IFlexibleBakedModel {
     private class CacheKey {
         private IBlockState state;
-        private EnumFacing side;
         private Integer[] diskState;
 
-        CacheKey(IBlockState state, @Nullable EnumFacing side, Integer[] diskState) {
+        CacheKey(IBlockState state, Integer[] diskState) {
             this.state = state;
-            this.side = side;
-            this.diskState = diskState;
+            // DEVIATION: snapshot — the tile hands out its LIVE array (mutated in place by
+            // readUpdate), which would corrupt hash/equals for cached keys.
+            this.diskState = diskState.clone();
         }
 
         @Override
@@ -48,36 +50,106 @@ public class BakedModelDiskDrive implements IBakedModel {
                 return false;
             }
 
-            if (side != cacheKey.side) {
-                return false;
-            }
-
             return Arrays.equals(diskState, cacheKey.diskState);
         }
 
         @Override
         public int hashCode() {
             int result = state.hashCode();
-            result = 31 * result + (side != null ? side.hashCode() : 0);
             result = 31 * result + Arrays.hashCode(diskState);
             return result;
         }
     }
 
+    private static class ComposedModel implements IBakedModel {
+        private final IBakedModel base;
+        private final Map<EnumFacing, List<BakedQuad>> faces;
+        private final List<BakedQuad> general;
+
+        ComposedModel(IBakedModel base, Map<EnumFacing, List<BakedQuad>> faces, List<BakedQuad> general) {
+            this.base = base;
+            this.faces = faces;
+            this.general = general;
+        }
+
+        @Override
+        public List<BakedQuad> getFaceQuads(EnumFacing facing) {
+            List<BakedQuad> quads = faces.get(facing);
+
+            return quads != null ? quads : Collections.<BakedQuad>emptyList();
+        }
+
+        @Override
+        public List<BakedQuad> getGeneralQuads() {
+            return general;
+        }
+
+        @Override
+        public boolean isAmbientOcclusion() {
+            return base.isAmbientOcclusion();
+        }
+
+        @Override
+        public boolean isGui3d() {
+            return base.isGui3d();
+        }
+
+        @Override
+        public boolean isBuiltInRenderer() {
+            return base.isBuiltInRenderer();
+        }
+
+        @Override
+        public TextureAtlasSprite getParticleTexture() {
+            return base.getParticleTexture();
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public ItemCameraTransforms getItemCameraTransforms() {
+            return base.getItemCameraTransforms();
+        }
+    }
+
     private IBakedModel base;
+    private VertexFormat format;
     private Map<EnumFacing, IBakedModel> models = new HashMap<>();
     private Map<EnumFacing, Map<Integer, List<IBakedModel>>> disks = new HashMap<>();
 
-    // PORT-SLICE-5: the composed-model cache is restored with the 1.8.9 quad pipeline.
-    private LoadingCache<CacheKey, List<BakedQuad>> cache = CacheBuilder.newBuilder().build(new CacheLoader<CacheKey, List<BakedQuad>>() {
+    private LoadingCache<CacheKey, IBakedModel> cache = CacheBuilder.newBuilder().build(new CacheLoader<CacheKey, IBakedModel>() {
         @Override
-        public List<BakedQuad> load(CacheKey key) throws Exception {
-            return Collections.emptyList();
+        public IBakedModel load(CacheKey key) throws Exception {
+            EnumFacing facing = key.state.getValue(RSBlocks.DISK_DRIVE.getDirection().getProperty());
+
+            Map<EnumFacing, List<BakedQuad>> faces = new EnumMap<>(EnumFacing.class);
+
+            for (EnumFacing side : EnumFacing.VALUES) {
+                List<BakedQuad> quads = new ArrayList<>(models.get(facing).getFaceQuads(side));
+
+                for (int i = 0; i < 8; ++i) {
+                    if (key.diskState[i] != TileDiskDrive.DISK_STATE_NONE) {
+                        quads.addAll(disks.get(facing).get(key.diskState[i]).get(i).getFaceQuads(side));
+                    }
+                }
+
+                faces.put(side, quads);
+            }
+
+            List<BakedQuad> general = new ArrayList<>(models.get(facing).getGeneralQuads());
+
+            for (int i = 0; i < 8; ++i) {
+                if (key.diskState[i] != TileDiskDrive.DISK_STATE_NONE) {
+                    general.addAll(disks.get(facing).get(key.diskState[i]).get(i).getGeneralQuads());
+                }
+            }
+
+            return new ComposedModel(base, faces, general);
         }
     });
 
-    public BakedModelDiskDrive(IBakedModel base, IBakedModel disk, IBakedModel diskNearCapacity, IBakedModel diskFull, IBakedModel diskDisconnected) {
+    public BakedModelDiskDrive(VertexFormat format, IBakedModel base, IBakedModel disk, IBakedModel diskNearCapacity, IBakedModel diskFull, IBakedModel diskDisconnected) {
         this.base = base;
+        this.format = format;
 
         for (EnumFacing facing : EnumFacing.HORIZONTALS) {
             models.put(facing, new BakedModelTRSR(base, facing));
@@ -118,8 +190,28 @@ public class BakedModelDiskDrive implements IBakedModel {
         }
     }
 
-    // PORT-SLICE-5: pass-through shell. Disk-state composition is re-implemented against 1.8.9
-    // (ISmartBlockModel/extended-state-aware baking); the cache/TRSROverride design is preserved.
+    // DEVIATION: 1.8.9 delivers extended state via ISmartBlockModel.handleBlockState
+    // (no per-side getQuads). The composed model is cached per (state, disk-state).
+    @Override
+    public IBakedModel handleBlockState(IBlockState state) {
+        if (!(state instanceof IExtendedBlockState)) {
+            return this;
+        }
+
+        Integer[] diskState = ((IExtendedBlockState) state).getValue(BlockDiskDrive.DISK_STATE);
+
+        if (diskState == null) {
+            return this;
+        }
+
+        return cache.getUnchecked(new CacheKey(((IExtendedBlockState) state).getClean(), diskState));
+    }
+
+    @Override
+    public VertexFormat getFormat() {
+        return format;
+    }
+
     @Override
     public List<BakedQuad> getFaceQuads(EnumFacing facing) {
         return base.getFaceQuads(facing);
@@ -155,5 +247,4 @@ public class BakedModelDiskDrive implements IBakedModel {
     public ItemCameraTransforms getItemCameraTransforms() {
         return base.getItemCameraTransforms();
     }
-
 }

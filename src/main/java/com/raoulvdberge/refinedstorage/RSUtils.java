@@ -641,20 +641,57 @@ public final class RSUtils {
         tessellator.draw();
     }
 
-    // PORT-SLICE-5: item/block display transforms need a full 1.8.9 redesign (1.8.9 TransformType
-    // has no LEFT/RIGHT_HAND split; quatFromXYZDegrees is absent). Identity stubs keep the
-    // tree compiling; RENDERING.md will record the per-model design and §10 transforms.
-    public static final Matrix4f EMPTY_MATRIX_TRANSFORM = new Matrix4f();
+    // DEVIATION: full 1.8.9 port of the source's ForgeBlockStateV1-derived defaults.
+    // 1.8.9 TransformType has no LEFT/RIGHT_HAND split (single THIRD_PERSON/FIRST_PERSON),
+    // and TRSRTransformation has quatFromYXZDegrees, not quatFromXYZDegrees. Single-axis
+    // entries are identical under either order; the two dual-axis block entries
+    // (thirdperson 75/45, GUI 30/225) are YXZ approximations of the XYZ originals.
+    // NOTE: EMPTY_MATRIX_TRANSFORM is built WITHOUT TRSRTransformation on purpose:
+    // net.minecraftforge.client.model is client-only, and this static initializer runs
+    // on dedicated servers too (source could use it: 1.11 TRSRTransformation is common).
+    // The 16-float Matrix4f below is exactly identity, matching getTransform(0..1).
+    public static final Matrix4f EMPTY_MATRIX_TRANSFORM = new Matrix4f(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1);
 
     private static TRSRTransformation getTransform(float tx, float ty, float tz, float ax, float ay, float az, float s) {
-        return TRSRTransformation.identity();
+        return new TRSRTransformation(
+            new javax.vecmath.Vector3f(tx / 16, ty / 16, tz / 16),
+            TRSRTransformation.quatFromYXZDegrees(new javax.vecmath.Vector3f(ax, ay, az)),
+            new javax.vecmath.Vector3f(s, s, s),
+            null
+        );
     }
 
+    private static ImmutableMap<ItemCameraTransforms.TransformType, TRSRTransformation> DEFAULT_ITEM_TRANSFORM;
+    private static ImmutableMap<ItemCameraTransforms.TransformType, TRSRTransformation> DEFAULT_BLOCK_TRANSFORM;
+
     public static ImmutableMap<ItemCameraTransforms.TransformType, TRSRTransformation> getDefaultItemTransforms() {
-        return ImmutableMap.of();
+        if (DEFAULT_ITEM_TRANSFORM != null) {
+            return DEFAULT_ITEM_TRANSFORM;
+        }
+
+        return DEFAULT_ITEM_TRANSFORM = ImmutableMap.<ItemCameraTransforms.TransformType, TRSRTransformation>builder()
+            .put(ItemCameraTransforms.TransformType.THIRD_PERSON, getTransform(0, 3, 1, 0, 0, 0, 0.55f))
+            .put(ItemCameraTransforms.TransformType.FIRST_PERSON, getTransform(1.13f, 3.2f, 1.13f, 0, -90, 25, 0.68f))
+            .put(ItemCameraTransforms.TransformType.GROUND, getTransform(0, 2, 0, 0, 0, 0, 0.5f))
+            .put(ItemCameraTransforms.TransformType.HEAD, getTransform(0, 13, 7, 0, 180, 0, 1))
+            .build();
     }
 
     public static ImmutableMap<ItemCameraTransforms.TransformType, TRSRTransformation> getDefaultBlockTransforms() {
-        return ImmutableMap.of();
+        if (DEFAULT_BLOCK_TRANSFORM != null) {
+            return DEFAULT_BLOCK_TRANSFORM;
+        }
+
+        return DEFAULT_BLOCK_TRANSFORM = ImmutableMap.<ItemCameraTransforms.TransformType, TRSRTransformation>builder()
+            .put(ItemCameraTransforms.TransformType.GUI, getTransform(0, 0, 0, 30, 225, 0, 0.625f))
+            .put(ItemCameraTransforms.TransformType.GROUND, getTransform(0, 3, 0, 0, 0, 0, 0.25f))
+            .put(ItemCameraTransforms.TransformType.FIXED, getTransform(0, 0, 0, 0, 0, 0, 0.5f))
+            .put(ItemCameraTransforms.TransformType.THIRD_PERSON, getTransform(0, 2.5f, 0, 75, 45, 0, 0.375f))
+            .put(ItemCameraTransforms.TransformType.FIRST_PERSON, getTransform(0, 0, 0, 0, 45, 0, 0.4f))
+            .build();
     }
 }

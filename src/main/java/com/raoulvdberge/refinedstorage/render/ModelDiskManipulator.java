@@ -43,7 +43,12 @@ public class ModelDiskManipulator implements IModel {
         return Collections.emptyList();
     }
 
-    // PORT-SLICE-5: wrapped as IFlexibleBakedModel for the 1.8.9 pipeline; composition restored in slice 5.
+    // DEVIATION: BakedModelDiskManipulator implements ISmartBlockModel + IFlexibleBakedModel
+    // natively, so no Wrapper is needed (wrapping would hide handleBlockState).
+    // (1.8.9 IModel.bake returns IFlexibleBakedModel, which our model is.)
+    // Sub-models bake with IDENTITY state: on 1.8.9 the variant y-rotation is baked
+    // into quads, while the per-facing BakedModelTRSR rotations already carry the full
+    // orientation — passing the variant rotation through would rotate twice.
     @Override
     public IFlexibleBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
         IModel baseModelConnected, baseModelDisconnected;
@@ -63,14 +68,17 @@ public class ModelDiskManipulator implements IModel {
             throw new Error("Unable to load disk manipulator models", e);
         }
 
-        return new IFlexibleBakedModel.Wrapper(new BakedModelDiskManipulator(
-            baseModelConnected.bake(state, format, bakedTextureGetter),
-            baseModelDisconnected.bake(state, format, bakedTextureGetter),
-            diskModel.bake(state, format, bakedTextureGetter),
-            diskModelNearCapacity.bake(state, format, bakedTextureGetter),
-            diskModelFull.bake(state, format, bakedTextureGetter),
-            diskModelDisconnected.bake(state, format, bakedTextureGetter)
-        ), format);
+        IModelState identity = TRSRTransformation.identity();
+
+        return new BakedModelDiskManipulator(
+            format,
+            baseModelConnected.bake(identity, format, bakedTextureGetter),
+            baseModelDisconnected.bake(identity, format, bakedTextureGetter),
+            diskModel.bake(identity, format, bakedTextureGetter),
+            diskModelNearCapacity.bake(identity, format, bakedTextureGetter),
+            diskModelFull.bake(identity, format, bakedTextureGetter),
+            diskModelDisconnected.bake(identity, format, bakedTextureGetter)
+        );
     }
 
     @Override

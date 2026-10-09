@@ -82,6 +82,14 @@ public abstract class TileBase extends TileEntity {
     @Override
     public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity packet) {
         readUpdate(packet.getNbtCompound());
+
+        // DEVIATION: 1.8.9's S35 handler applies data but never re-renders (verified in
+        // NetHandlerPlayClient sources). Without this, tile-state visuals (drive disks,
+        // controller energy level) stay stale until an unrelated chunk rebuild. This only
+        // ever runs client-side (packet handler), so the server is unaffected.
+        if (worldObj != null && pos != null) {
+            worldObj.markBlockRangeForRenderUpdate(pos, pos);
+        }
     }
 
     public void handleUpdateTag(NBTTagCompound tag) {

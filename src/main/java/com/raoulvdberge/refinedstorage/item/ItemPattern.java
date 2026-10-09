@@ -8,6 +8,8 @@ import com.raoulvdberge.refinedstorage.api.autocrafting.ICraftingPatternProvider
 import com.raoulvdberge.refinedstorage.api.util.IStackList;
 import com.raoulvdberge.refinedstorage.apiimpl.API;
 import com.raoulvdberge.refinedstorage.apiimpl.autocrafting.CraftingPattern;
+import com.raoulvdberge.refinedstorage.render.BakedModelPattern;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
@@ -17,6 +19,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -35,6 +39,28 @@ public class ItemPattern extends ItemBase implements ICraftingPatternProvider {
 
     public ItemPattern() {
         super("pattern");
+    }
+
+    // DEVIATION: 1.8.9 has no ItemColors registry; per-item tint via override (same logic
+    // as the 1.11 color handler: output's color when shift-showing a valid single output).
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int getColorFromItemStack(ItemStack stack, int renderPass) {
+        if (Minecraft.getMinecraft().theWorld != null) {
+            CraftingPattern pattern = getPatternFromCache(Minecraft.getMinecraft().theWorld, stack);
+
+            if (BakedModelPattern.canDisplayPatternOutput(pattern) && !pattern.getOutputs().isEmpty() && pattern.getOutputs().get(0) != null) {
+                ItemStack output = pattern.getOutputs().get(0);
+
+                int color = output.getItem().getColorFromItemStack(output, renderPass);
+
+                if (color != -1) {
+                    return color;
+                }
+            }
+        }
+
+        return 0xFFFFFF;
     }
 
     public static CraftingPattern getPatternFromCache(World world, ItemStack stack) {

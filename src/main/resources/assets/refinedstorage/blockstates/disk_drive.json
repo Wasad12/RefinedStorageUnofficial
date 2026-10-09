@@ -1,7 +1,7 @@
 {
   "forge_marker": 1,
   "defaults": {
-    "model": "refinedstorage:disk_drive"
+    "model": "refinedstorage:disk_drive_smart"
   },
   "variants": {
     "inventory": [

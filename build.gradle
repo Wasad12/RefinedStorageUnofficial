@@ -7,9 +7,21 @@ buildscript {
             name = "forge"
             url = "https://files.minecraftforge.net/maven"
         }
+        // JEI 1.8.9 API (soft-dep, compile-only via deobfProvided below)
+        maven {
+            name = "jei"
+            url = "https://dvs1.progwml6.com/files/maven"
+        }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+    }
+}
+// Project repositories (for normal + deobf dependencies — buildscript repos above do NOT apply here)
+repositories {
+    maven {
+        name = "jei"
+        url = "https://dvs1.progwml6.com/files/maven"
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
@@ -57,6 +69,11 @@ dependencies {
     // except that these dependencies get remapped to your current MCP mappings
     //deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
     //deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+    // JEI 1.8.9 integration is an optional soft-dep (L7.1): compile-only, never
+    // packaged. The @Optional(Method) guards + Loader.isModLoaded checks keep the
+    // mod fully functional without JEI at runtime.
+    deobfProvided "mezz.jei:jei_1.8.9:2.28.18.186"
 
     // for more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

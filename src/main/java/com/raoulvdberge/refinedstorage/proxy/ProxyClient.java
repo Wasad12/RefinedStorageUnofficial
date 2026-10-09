@@ -20,6 +20,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.ItemMeshDefinition;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.resources.model.ModelBakery;
@@ -29,6 +30,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
@@ -46,6 +48,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProxyClient extends ProxyCommon {
@@ -173,10 +176,12 @@ public class ProxyClient extends ProxyCommon {
 
         // Blocks
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CABLE), 0, new ModelResourceLocation("refinedstorage:cable", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.NORMAL.getId(), new ModelResourceLocation("refinedstorage:grid", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.CRAFTING.getId(), new ModelResourceLocation("refinedstorage:grid", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.PATTERN.getId(), new ModelResourceLocation("refinedstorage:grid", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.FLUID.getId(), new ModelResourceLocation("refinedstorage:grid", "inventory"));
+        // DEVIATION: 1.11 maps grid items to full-state variants (per-type fronts in hand);
+        // the Slice-2 static `#inventory` mapping shared one front. Restored per source.
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.NORMAL.getId(), new ModelResourceLocation("refinedstorage:grid", "connected=false,direction=north,type=normal"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.CRAFTING.getId(), new ModelResourceLocation("refinedstorage:grid", "connected=false,direction=north,type=crafting"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.PATTERN.getId(), new ModelResourceLocation("refinedstorage:grid", "connected=false,direction=north,type=pattern"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.GRID), GridType.FLUID.getId(), new ModelResourceLocation("refinedstorage:grid", "connected=false,direction=north,type=fluid"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.MACHINE_CASING), 0, new ModelResourceLocation("refinedstorage:machine_casing", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.DISK_DRIVE), 0, new ModelResourceLocation("refinedstorage:disk_drive", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.EXPORTER), 0, new ModelResourceLocation("refinedstorage:exporter", "inventory"));
@@ -193,7 +198,7 @@ public class ProxyClient extends ProxyCommon {
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.FLUID_INTERFACE), 0, new ModelResourceLocation("refinedstorage:fluid_interface", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.WIRELESS_TRANSMITTER), 0, new ModelResourceLocation("refinedstorage:wireless_transmitter", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CRAFTING_MONITOR), 0, new ModelResourceLocation("refinedstorage:crafting_monitor", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CRAFTER), 0, new ModelResourceLocation("refinedstorage:crafter", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CRAFTER), 0, new ModelResourceLocation("refinedstorage:crafter", "connected=false,direction=north"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.PROCESSING_PATTERN_ENCODER), 0, new ModelResourceLocation("refinedstorage:processing_pattern_encoder", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.NETWORK_TRANSMITTER), 0, new ModelResourceLocation("refinedstorage:network_transmitter", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.NETWORK_RECEIVER), 0, new ModelResourceLocation("refinedstorage:network_receiver", "inventory"));
@@ -210,20 +215,89 @@ public class ProxyClient extends ProxyCommon {
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.DISK_MANIPULATOR), 0, new ModelResourceLocation("refinedstorage:disk_manipulator", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.SECURITY_MANAGER), 0, new ModelResourceLocation("refinedstorage:security_manager", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.QUARTZ_ENRICHED_IRON), 0, new ModelResourceLocation("refinedstorage:quartz_enriched_iron_block", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.STORAGE_MONITOR), 0, new ModelResourceLocation("refinedstorage:storage_monitor", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.STORAGE_MONITOR), 0, new ModelResourceLocation("refinedstorage:storage_monitor", "connected=false,direction=north"));
 
         // DEVIATION (1.8.9): the 1.11 controller/portable-grid ItemMeshDefinitions are
-        // Slice-5 work (ledger L6.1). 1.8.9 needs the `type` property covered by the
-        // blockstate JSON instead of a code StateMap (a custom StateMap suppresses the
-        // blockstate `inventory` variant, leaving items missingno), so controller.json
-        // and portable_grid.json now declare `type` directly and no StateMap is used.
-        // All items below point at the `inventory` variant (forge:default-block
-        // transform = correct third-person holding). Per-type/energy in-hand dynamics
-        // return with the Slice 5 mesh definitions; until then grid subtypes share the
-        // normal front and both controllers show unlit.
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CONTROLLER), ControllerType.NORMAL.getId(), new ModelResourceLocation("refinedstorage:controller", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.CONTROLLER), ControllerType.CREATIVE.getId(), new ModelResourceLocation("refinedstorage:controller", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(RSBlocks.PORTABLE_GRID), 0, new ModelResourceLocation("refinedstorage:portable_grid", "inventory"));
+        // restored here (ledger L6.1; per-type/energy in-hand dynamics). Unlike 1.11's
+        // StateMap-ignored `type`, the 1.8.9 JSONs declare `type` directly (a custom
+        // StateMap would suppress the blockstate `inventory` variant), so the mesh
+        // locations carry type explicitly. Variant strings are alphabetical
+        // (direction,energy,type): Forge 1.8.9 bakes/looks-up forge-blockstate variants
+        // under alphabetically-sorted keys, and ModelResourceLocation matching is exact.
+        // Per ModelLoader docs, every mesh-returnable location must ALSO be passed to
+        // ModelBakery.registerItemVariants or it never bakes (renders missingno).
+        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(RSBlocks.CONTROLLER), new ItemMeshDefinition() {
+            @Override
+            public ModelResourceLocation getModelLocation(ItemStack stack) {
+                String type = stack.getItemDamage() == ControllerType.CREATIVE.getId() ? "creative" : "normal";
+
+                int energy = stack.getItemDamage() == ControllerType.CREATIVE.getId() ? 7 : TileController.getEnergyScaled(ItemBlockController.getEnergyStored(stack), ItemBlockController.getEnergyCapacity(stack), 7);
+
+                return controllerLocation(type, energy);
+            }
+        });
+
+        for (int energy = 0; energy <= 7; ++energy) {
+            ModelBakery.registerItemVariants(Item.getItemFromBlock(RSBlocks.CONTROLLER),
+                controllerLocation("normal", energy),
+                controllerLocation("creative", energy));
+        }
+
+        ModelLoader.setCustomMeshDefinition(Item.getItemFromBlock(RSBlocks.PORTABLE_GRID), new ItemMeshDefinition() {
+            @Override
+            public ModelResourceLocation getModelLocation(ItemStack stack) {
+                PortableGrid portableGrid = new PortableGrid(null, stack);
+
+                String type = stack.getItemDamage() == ItemBlockPortableGrid.TYPE_CREATIVE ? "creative" : "normal";
+
+                return portableGridLocation(type, portableGrid.getEnergy() != 0, TilePortableGrid.getDiskState(portableGrid));
+            }
+        });
+
+        ModelBakery.registerItemVariants(Item.getItemFromBlock(RSBlocks.PORTABLE_GRID), portableGridLocations());
+
+        // DEVIATION: 1.8.9 model lookup never sees the bare JSON path. ForgeBlockStateV1
+        // prepends "block/" when deserializing and ModelLoaderRegistry.getActualLocation
+        // prepends "models/" before consulting loaders (verified in Forge sources) — so the
+        // location arriving here is "refinedstorage:models/block/disk_drive_smart".
+        // Matching only the bare path (as 1.11 does) silently never fires: vanilla falls
+        // back to the plain casing JSON with no error, rendering a diskless drive forever.
+        // (This was the invisible-drive-disks bug: no crash, no log, base renders fine.)
+        // The "_smart" indirection is deliberate: the blockstates point at it while
+        // ModelDiskDrive's own base/disk dependencies stay on the plain JSON paths.
+        // Without the split, the loader would also catch its own base model and recurse
+        // infinitely (StackOverflowError at bake — observed).
+        ModelLoaderRegistry.registerLoader(new ICustomModelLoader() {
+            @Override
+            public boolean accepts(ResourceLocation modelLocation) {
+                return modelLocation.getResourceDomain().equals(RS.ID) && (modelLocation.getResourcePath().equals("block/disk_drive_smart") || modelLocation.getResourcePath().equals("models/block/disk_drive_smart"));
+            }
+
+            @Override
+            public IModel loadModel(ResourceLocation modelLocation) throws java.io.IOException {
+                return new ModelDiskDrive();
+            }
+
+            @Override
+            public void onResourceManagerReload(IResourceManager resourceManager) {
+            }
+        });
+
+        ModelLoaderRegistry.registerLoader(new ICustomModelLoader() {
+            @Override
+            public boolean accepts(ResourceLocation modelLocation) {
+                return modelLocation.getResourceDomain().equals(RS.ID) && (modelLocation.getResourcePath().equals("block/disk_manipulator_smart") || modelLocation.getResourcePath().equals("models/block/disk_manipulator_smart"));
+            }
+
+            @Override
+            public IModel loadModel(ResourceLocation modelLocation) throws java.io.IOException {
+                return new ModelDiskManipulator();
+            }
+
+            @Override
+            public void onResourceManagerReload(IResourceManager resourceManager) {
+            }
+        });
     }
 
     @Override
@@ -257,9 +331,57 @@ public class ProxyClient extends ProxyCommon {
         });
     }
 
+    private static ModelResourceLocation controllerLocation(String type, int energy) {
+        return new ModelResourceLocation("refinedstorage:controller", "direction=north,energy=" + energy + ",type=" + type);
+    }
+
+    private static ModelResourceLocation portableGridLocation(String type, boolean connected, PortableGridDiskState diskState) {
+        return new ModelResourceLocation("refinedstorage:portable_grid", "connected=" + connected + ",direction=north,disk_state=" + diskState + ",type=" + type);
+    }
+
+    private static ModelResourceLocation[] portableGridLocations() {
+        List<ModelResourceLocation> locations = new ArrayList<>();
+
+        for (String type : new String[] {"normal", "creative"}) {
+            for (boolean connected : new boolean[] {true, false}) {
+                for (PortableGridDiskState diskState : PortableGridDiskState.values()) {
+                    locations.add(portableGridLocation(type, connected, diskState));
+                }
+            }
+        }
+
+        return locations.toArray(new ModelResourceLocation[locations.size()]);
+    }
+
     @SubscribeEvent
     public void onModelBake(ModelBakeEvent e) {
-        // PORT-SLICE-5: baked-model wrapping re-implemented against 1.8.9 IFlexibleBakedModel (ledger L6.1).
+        // DEVIATION: 1.8.9 ModelBakeEvent exposes modelRegistry as a field (no getKeys()),
+        // so known locations are wrapped directly. Pattern uses a static inventory mapping;
+        // portable-grid item models arrive via the ItemMeshDefinition as blockstate variants,
+        // which are all wrapped for perspective (same alphabetical keys as registration).
+        wrapPatternModel(e, new ModelResourceLocation("refinedstorage:pattern", "inventory"));
+
+        for (ModelResourceLocation location : portableGridLocations()) {
+            wrapPortableGridModel(e, location);
+        }
+
+        wrapPortableGridModel(e, new ModelResourceLocation("refinedstorage:portable_grid", "inventory"));
+    }
+
+    private void wrapPatternModel(ModelBakeEvent e, ModelResourceLocation location) {
+        net.minecraft.client.resources.model.IBakedModel model = e.modelRegistry.getObject(location);
+
+        if (model != null) {
+            e.modelRegistry.putObject(location, new BakedModelPattern(model));
+        }
+    }
+
+    private void wrapPortableGridModel(ModelBakeEvent e, ModelResourceLocation location) {
+        net.minecraft.client.resources.model.IBakedModel model = e.modelRegistry.getObject(location);
+
+        if (model != null) {
+            e.modelRegistry.putObject(location, new BakedModelPortableGrid(model));
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

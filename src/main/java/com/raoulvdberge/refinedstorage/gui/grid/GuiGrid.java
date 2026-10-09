@@ -24,6 +24,8 @@ import com.raoulvdberge.refinedstorage.gui.grid.stack.IGridStack;
 import com.raoulvdberge.refinedstorage.gui.sidebutton.*;
 
 import com.raoulvdberge.refinedstorage.item.filter.FilterTab;
+import com.raoulvdberge.refinedstorage.integration.jei.IntegrationJEI;
+import com.raoulvdberge.refinedstorage.integration.jei.RSJEIPlugin;
 import com.raoulvdberge.refinedstorage.network.*;
 import com.raoulvdberge.refinedstorage.tile.data.TileDataManager;
 import com.raoulvdberge.refinedstorage.tile.grid.IGrid;
@@ -43,6 +45,7 @@ import net.minecraft.util.BlockPos;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Optional;
 import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
@@ -661,8 +664,14 @@ public class GuiGrid extends GuiBase implements IGridDisplay {
         }
     }
 
+    // DEVIATION: JEI 2.x syncs grid→JEI via getItemListOverlay (4.x uses
+    // getIngredientFilter). Stripped by FML when JEI is absent (@Optional), and every
+    // call site is guarded by IntegrationJEI.isLoaded(), so the GUI is safe without JEI.
+    @Optional.Method(modid = "JEI")
     private void updateJEI() {
-        // DEVIATION: JEI integration dropped on 1.8.9 — no-op (call sites kept to minimize diff).
+        if (IntegrationJEI.isLoaded() && (grid.getSearchBoxMode() == NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED || grid.getSearchBoxMode() == NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED_AUTOSELECTED) && RSJEIPlugin.INSTANCE != null && RSJEIPlugin.INSTANCE.getRuntime() != null) {
+            RSJEIPlugin.INSTANCE.getRuntime().getItemListOverlay().setFilterText(searchField.getText());
+        }
     }
 
     public void updateSearchFieldFocus(int mode) {

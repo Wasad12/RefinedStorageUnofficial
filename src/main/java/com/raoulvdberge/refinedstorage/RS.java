@@ -23,8 +23,9 @@ public final class RS {
 
     public static final String ID = "refinedstorage";
     public static final String VERSION = "1.4.21";
-    // DEVIATION: retargeted to 1.8.9 Forge (modId "Forge", case-sensitive); JEI soft-dep removed.
-    public static final String DEPENDENCIES = "required-after:Forge@[11.15.1.2318,)";
+    // DEVIATION: retargeted to 1.8.9 Forge (modId "Forge", case-sensitive); JEI restored
+    // as an optional soft-dep 2026-10-09 (after: load order only, never required).
+    public static final String DEPENDENCIES = "required-after:Forge@[11.15.1.2318,);after:JEI";
     public static final String GUI_FACTORY = "com.raoulvdberge.refinedstorage.gui.config.ModGuiFactory";
     public static final String UPDATE_JSON = "https://refinedstorage.raoulvdberge.com/update";
 

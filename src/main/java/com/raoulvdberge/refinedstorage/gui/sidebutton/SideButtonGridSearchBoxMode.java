@@ -3,6 +3,7 @@ package com.raoulvdberge.refinedstorage.gui.sidebutton;
 import com.raoulvdberge.refinedstorage.apiimpl.network.node.NetworkNodeGrid;
 import com.raoulvdberge.refinedstorage.gui.GuiBase;
 import com.raoulvdberge.refinedstorage.gui.grid.GuiGrid;
+import com.raoulvdberge.refinedstorage.integration.jei.IntegrationJEI;
 import net.minecraft.util.EnumChatFormatting;
 
 public class SideButtonGridSearchBoxMode extends SideButton {
@@ -29,8 +30,11 @@ public class SideButtonGridSearchBoxMode extends SideButton {
         if (mode == NetworkNodeGrid.SEARCH_BOX_MODE_NORMAL) {
             mode = NetworkNodeGrid.SEARCH_BOX_MODE_NORMAL_AUTOSELECTED;
         } else if (mode == NetworkNodeGrid.SEARCH_BOX_MODE_NORMAL_AUTOSELECTED) {
-            // DEVIATION: JEI integration dropped on 1.8.9 — JEI-synchronized modes unreachable, cycle back to NORMAL.
-            mode = NetworkNodeGrid.SEARCH_BOX_MODE_NORMAL;
+            if (IntegrationJEI.isLoaded()) {
+                mode = NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED;
+            } else {
+                mode = NetworkNodeGrid.SEARCH_BOX_MODE_NORMAL;
+            }
         } else if (mode == NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED) {
             mode = NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED_AUTOSELECTED;
         } else if (mode == NetworkNodeGrid.SEARCH_BOX_MODE_JEI_SYNCHRONIZED_AUTOSELECTED) {
